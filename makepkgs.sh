@@ -88,17 +88,17 @@ shift $((OPTIND-1))
 
 ### MAKE SURE THE SCRIPT ISN'T RUNNING WITH ROOT RIGHTS ###
 
-[[ ${EUID} -eq 0 ]] && echo -e "It's not allowed to build packages as root." && die
+[[ "${EUID}" -eq 0 ]] && echo -e "It's not allowed to build packages as root." && die
 
 ### CHECK TO SEE IF WE ARE ALREADY RUNNING ###
 
-if [ -f ${LOCKFILE} ]; then
+if [ -f "${LOCKFILE}" ]; then
   echo "Lock file ${LOCKFILE} detected.  Is the script already running?" >&2
   [ -t 1 ] && echo "This file may be left behind if the script crashes or is interrupted"
   [ -t 1 ] && echo "If you are sure that this script is not running please delete the lock file."
   die
 else
-  touch ${LOCKFILE}
+  touch "${LOCKFILE}"
 fi
 
 ### TELL USER ABOUT FALLING BACK TO DEFAULTS ###
@@ -110,7 +110,7 @@ fi
 ### MAKE SURE WE HAVE THE REQUISITE BINARIES ###
 
 for binary in sed tar xz host curl arch-nspawn makechrootpkg; do
-  type ${binary} > /dev/null 2>&1 || { echo "${binary} is not installed." >&2; die; }
+  type ${binary} > /dev/null 2>&1 || $(pacman -S --noconfirm "${binary}")
 done
 
 ### MAKE SURE A REPO NAME WAS SPECIFIED ###
@@ -120,8 +120,9 @@ done
 ### MAKE SURE THE BUILD CHROOTS EXISTS ###
 
 if [ ! -d "${CHROOT}/x86_64/root" ]; then
-  echo "${CHROOT}/x86_64/root does not exist.  Does ${CHROOT} contain chroots for building?" >&2
-  die
+  echo "${CHROOT}/x86_64/root does not exist.  Setting up the initial base chroot" >&2
+  mkdir -p "${CHROOT}/x86_64/root"
+  mkarchroot "${CHROOT}/x86_64/root" base-devel
 fi
 
 ### CHECK TO SEE IF WE HAVE A WORKING INTERNET CONNECTION ###
