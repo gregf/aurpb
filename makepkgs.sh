@@ -20,8 +20,7 @@ COMBINABLE FLAGS:
 
   -c  <CHROOT-DIR> Chroot directory for makechrootpkg.  Program will
                    append \$arch to this value.  Default is /srv/build.
-                   Program will build i686 packages in <CHROOT-DIR>/i686
-                   and build x86_64 packages in <CHROOT-DIR>/x86_64.
+                   Program will build x86_64 packages in <CHROOT-DIR>/x86_64.
 
   -i               Prints extra information.  (Not exactly verbose.)
 
