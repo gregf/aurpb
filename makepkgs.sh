@@ -155,7 +155,7 @@ function system_update () {
 }
 
 function pkg_ver_comp () {
-  [ ! $(echo -e "${1}\n${2}" | sort --version-sort | head -1) = "${2}" ]
+  vercmp "${1}" "${2}"
 }
 
 function pkg_ver_loc () {
