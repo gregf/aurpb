@@ -121,8 +121,8 @@ done
 
 if [ ! -d "${CHROOT}/x86_64/root" ]; then
   echo "${CHROOT}/x86_64/root does not exist.  Setting up the initial base chroot" >&2
-  mkdir -p "${CHROOT}/x86_64/root"
-  mkarchroot "${CHROOT}/x86_64/root" base-devel
+  sudo mkdir -p "${CHROOT}/x86_64"
+  sudo mkarchroot "${CHROOT}/x86_64/root" base-devel
 fi
 
 ### CHECK TO SEE IF WE HAVE A WORKING INTERNET CONNECTION ###
