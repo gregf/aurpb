@@ -35,8 +35,6 @@ COMBINABLE FLAGS:
                    which retains orignal user name even with privilege
                    escalation with su.
 
-  -f  Update RSS   Update an RSS feed
-
 END_OF_SHOW_HELP
 }
 
@@ -58,7 +56,6 @@ FLAG_MAKE=true  # Make packages?
 FLAG_LIST=false # Only list package info?
 FLAG_REPO=false # Only update the repos?
 FLAG_SIGN=false # Only sign packages?
-FLAG_URSS=false # Update the RSS feed?
 FLAG_INFO=false # Print a little more info?
 
 ### SET VARIABLES BASED ON PARAMETERS ###
@@ -72,7 +69,6 @@ while getopts "hildsfpc:r:n:u:" opt; do
     l) FLAG_LIST=true ; FLAG_MAKE=false ; break ;;
     d) FLAG_REPO=true ; FLAG_MAKE=false ; break ;;
     s) FLAG_SIGN=true ; FLAG_MAKE=false ; break ;;
-    f) FLAG_URSS=true ; FLAG_MAKE=true ;;
     i) FLAG_INFO=true   ;;
     c) CHROOT=${OPTARG} ;;
     r) REPDIR=${OPTARG} ;;
@@ -336,23 +332,6 @@ else
 fi
 
 [ -t 1 ] && echo -e "\n${BEGIN}*** FINISHED WITH REPO ${REPNAM} ***${RESET}\n"
-
-if [ ! ${FLAG_URSS} ]; then
-
-  # This section relies on BrainwreckedRSS
-  # Visit rss.bw-tech.net for more information
-
-  cd ${REPDIR}/bwrss
-
-  [[ "$NEWPKS" != "" ]] &&
-    NEWPKS=$(echo "$NEWPKS" | sed ':a;N;$!ba;s/\n/\&lt;br\/\&gt; /g') &&
-    php update.php aurpb "New Packages Built" "AURPB Build Script" "${NEWPKS} &lt;br /&gt;Packages are waiting production."
-
-  [[ "$BADPKS" != "" ]] &&
-    BADPKS=$(echo "$BADPKS" | sed ':a;N;$!ba;s/\n/\&lt;br\/\&gt; /g') &&
-    EXCUSE="Common reasons: Dependencies broken, source dl link broken, AUR maintainer broken."
-    php update.php aurpb "Failed Packages" "AURPB Build Script" "${BADPKS} &lt;br /&gt;${EXCUSE}"
-fi
 
 rm ${LOCKFILE}
 exit 0
