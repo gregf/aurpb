@@ -64,7 +64,7 @@ OPTIND=1
 
 while getopts "hildsfpc:r:n:u:" opt; do
   case "${opt}" in
-    '?')  show_help >&2 && exit 1;;
+    '?')  show_help >&2 && die;;
     h) show_help && exit 0;;
     l) FLAG_LIST=true ; FLAG_MAKE=false ; break ;;
     d) FLAG_REPO=true ; FLAG_MAKE=false ; break ;;
@@ -82,7 +82,7 @@ shift $((OPTIND-1))
 
 ### MAKE SURE THE SCRIPT ISN'T RUNNING WITH ROOT RIGHTS ###
 
-[[ ${EUID} -eq 0 ]] && echo -e "It's not allowed to build packages as root." && exit 1
+[[ ${EUID} -eq 0 ]] && echo -e "It's not allowed to build packages as root." && die
 
 ### CHECK TO SEE IF WE ARE ALREADY RUNNING ###
 
@@ -90,7 +90,7 @@ if [ -f ${LOCKFILE} ]; then
   echo "Lock file ${LOCKFILE} detected.  Is the script already running?" >&2
   [ -t 1 ] && echo "This file may be left behind if the script crashes or is interrupted"
   [ -t 1 ] && echo "If you are sure that this script is not running please delete the lock file."
-  exit 1
+  die
 else
   touch ${LOCKFILE}
 fi
@@ -104,24 +104,24 @@ fi
 ### MAKE SURE WE HAVE THE REQUISITE BINARIES ###
 
 for binary in sed tar xz host curl arch-nspawn makechrootpkg; do
-  type ${binary} > /dev/null 2>&1 || { echo "${binary} is not installed." >&2; exit 1; }
+  type ${binary} > /dev/null 2>&1 || { echo "${binary} is not installed." >&2; die; }
 done
 
 ### MAKE SURE A REPO NAME WAS SPECIFIED ###
 
-[ -z ${REPNAM} ] && echo "No repo name specified" >&2 && show_help >&2 rm /var/run/lock/s.lock && exit 1
+[ -z ${REPNAM} ] && echo "No repo name specified" >&2 && show_help >&2 rm /var/run/lock/s.lock && die
 
 ### MAKE SURE THE BUILD CHROOTS EXISTS ###
 
 if [ ! -d "${CHROOT}/x86_64/root" ]; then
   echo "${CHROOT}/x86_64/root does not exist.  Does ${CHROOT} contain chroots for building?" >&2
-  exit 1
+  die
 fi
 
 ### CHECK TO SEE IF WE HAVE A WORKING INTERNET CONNECTION ###
 
 ! host aur.archlinux.org &> /dev/null && \
-  echo "Can't find host info for aur.archlinx.org.  Is your network up?  Is the site down?" && exit 1
+  echo "Can't find host info for aur.archlinx.org.  Is your network up?  Is the site down?" && die
 
 ### TEST IF AUR IS RESPONDING PROPERLY -- DEPENDS ON testpkg ###
 
@@ -131,12 +131,17 @@ fi
   aurtst=$(curl -G -s https://aur.archlinux.org/rpc.php --data type=info --data-urlencode arg=${tstpkg} | \
            sed 's/[,{]/\n/g' | grep "\"Version\"" | cut -d\" -f4)
 
-  [[ ${aurtst} != ${tstver} ]] && echo "Unexpected query result from the AUR for the ${tstpkg} package." && exit 1
+  [[ ${aurtst} != ${tstver} ]] && echo "Unexpected query result from the AUR for the ${tstpkg} package." && die
 
 ### FUNCTIONS ###
 
 function message() {
   [ -t 1 ] && echo -e "${COLOR}${1}${RESET}"
+}
+
+function die() {
+  rm ${LOCKFILE}
+  die
 }
 
 function system_update () {
@@ -326,7 +331,7 @@ if [ -f "${REPDIR}/${REPNAM}/build/aur/packages.list" ]; then
   done < "${REPDIR}/${REPNAM}/build/aur/packages.list"
 else
   echo "${REPDIR}/${REPNAM}/build/aur/packages.list does not exist." >&2
-  exit 1
+  die
 fi
 
 [ -t 1 ] && echo -e "\n${BEGIN}*** FINISHED WITH REPO ${REPNAM} ***${RESET}\n"
