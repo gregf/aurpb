@@ -284,7 +284,6 @@ if [ -f "${REPDIR}/${REPNAM}/build/aur/packages.list" ]; then
     echo -e "${BEGIN}*** STARTING WITH REPO ${REPNAM} ***${RESET}\n"
     echo -ne "PACKAGE NAME"; eval ${TAB1}
     echo -ne "LCL X86_64 VER"; eval ${TAB2}
-    echo -ne "LCL I686 VER"; eval ${TAB3}
     echo -e  "AUR VERSION"
   fi
 
@@ -297,7 +296,7 @@ if [ -f "${REPDIR}/${REPNAM}/build/aur/packages.list" ]; then
       lvx=$(pkg_ver_loc ${pkg} x86_64)
       if [ ${depupd} == 1 ]; then
         message "Dependency of ${pkg} updated.  Clearing out for rebuild..."
-        pkg_remove ${pkg} \* "x86_64"
+        pkg_remove ${pkg} \* x86_64
         repo_build x86_64
         system_update x86_64
         lvx=$(pkg_ver_loc ${pkg} x86_64)
