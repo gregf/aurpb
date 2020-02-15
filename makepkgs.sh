@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 [[ -z ${PATH} ]] && PATH=/usr/bin
 
@@ -113,12 +113,10 @@ done
 
 ### MAKE SURE THE BUILD CHROOTS EXISTS ###
 
-for arch in x86_64; do
-  if [ ! -d "${CHROOT}/${arch}/root" ]; then
-    echo "${CHROOT}/{$arch}/root does not exist.  Does ${CHROOT} contain chroots for building?" >&2
-    exit 1
-  fi
-done
+if [ ! -d "${CHROOT}/x86_64/root" ]; then
+  echo "${CHROOT}/x86_64/root does not exist.  Does ${CHROOT} contain chroots for building?" >&2
+  exit 1
+fi
 
 ### CHECK TO SEE IF WE HAVE A WORKING INTERNET CONNECTION ###
 
