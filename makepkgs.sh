@@ -61,7 +61,7 @@ FLAG_INFO=false # Print a little more info?
 
 OPTIND=1
 
-while getopts "hildsfpc:r:n:u:" opt; do
+while getopts "hildspc:r:n:u:" opt; do
   case "${opt}" in
     '?')  show_help >&2 && die;;
     h) show_help && exit 0;;
