@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 
+#set -x
+
 [[ -z ${PATH} ]] && PATH=/usr/bin
+
+function die() {
+  rm -f ${LOCKFILE}
+  exit 1
+}
 
 show_help () {
 cat <<END_OF_SHOW_HELP
@@ -137,11 +144,6 @@ fi
 
 function message() {
   [ -t 1 ] && echo -e "${COLOR}${1}${RESET}"
-}
-
-function die() {
-  rm ${LOCKFILE}
-  die
 }
 
 function system_update () {
@@ -287,6 +289,7 @@ if [ -f "${REPDIR}/${REPNAM}/build/aur/packages.list" ]; then
 
   while read line; do
     depupd=0
+    arch=x86_64
 
     for pkg in ${line}; do
       [[ "${pkg:0:1}" == "#" ]] && break
