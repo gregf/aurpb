@@ -5,7 +5,7 @@
 [[ -z ${PATH} ]] && PATH=/usr/bin
 
 function die() {
-  rm -f ${LOCKFILE}
+  rm -f "${LOCKFILE}"
   exit 1
 }
 
@@ -103,9 +103,9 @@ fi
 
 ### TELL USER ABOUT FALLING BACK TO DEFAULTS ###
 
-[ -z ${CHROOT} ] && CHROOT="/srv/build" && $FLAG_INFO && [ -t 1 ] && echo "No chroot directory specified, defaulting to /srv/build"
-[ -z ${REPDIR} ] && REPDIR="/srv/repo" && $FLAG_INFO && [ -t 1 ] && echo "No repo directory specified, defaulting to /srv/repo"
-[ -z ${USRNAM} ] && USRNAM="${USER}" && $FLAG_INFO && [ -t 1 ] && echo "No username specified.  Will sign packages as ${USER}"
+[ -z "${CHROOT}" ] && CHROOT="/srv/build" && $FLAG_INFO && [ -t 1 ] && echo "No chroot directory specified, defaulting to /srv/build"
+[ -z "${REPDIR}" ] && REPDIR="/srv/repo" && $FLAG_INFO && [ -t 1 ] && echo "No repo directory specified, defaulting to /srv/repo"
+[ -z "${USRNAM}" ] && USRNAM="${USER}" && $FLAG_INFO && [ -t 1 ] && echo "No username specified.  Will sign packages as ${USER}"
 
 ### MAKE SURE WE HAVE THE REQUISITE BINARIES ###
 
@@ -115,7 +115,7 @@ done
 
 ### MAKE SURE A REPO NAME WAS SPECIFIED ###
 
-[ -z ${REPNAM} ] && echo "No repo name specified" >&2 && show_help >&2 rm /var/run/lock/s.lock && die
+[ -z "${REPNAM}" ] && echo "No repo name specified" >&2 && show_help >&2 rm /var/run/lock/s.lock && die
 
 ### MAKE SURE THE BUILD CHROOTS EXISTS ###
 
@@ -131,13 +131,13 @@ fi
 
 ### TEST IF AUR IS RESPONDING PROPERLY -- DEPENDS ON testpkg ###
 
-  tstpkg=$(cat ${REPDIR}/testpkg | cut -f1)
-  tstver=$(cat ${REPDIR}/testpkg | cut -f2)
+  tstpkg=$(cut -f1 < "${REPDIR}/testpkg")
+  tstver=$(cut -f2 < "${REPDIR}/testpkg")
 
-  aurtst=$(curl -G -s https://aur.archlinux.org/rpc.php --data type=info --data-urlencode arg=${tstpkg} | \
+  aurtst=$(curl -G -s https://aur.archlinux.org/rpc.php --data type=info --data-urlencode arg="${tstpkg}" | \
            sed 's/[,{]/\n/g' | grep "\"Version\"" | cut -d\" -f4)
 
-  [[ ${aurtst} != ${tstver} ]] && echo "Unexpected query result from the AUR for the ${tstpkg} package." && die
+  [[ "${aurtst}" != "${tstver}" ]] && echo "Unexpected query result from the AUR for the ${tstpkg} package." && die
 
 ### FUNCTIONS ###
 
@@ -149,8 +149,8 @@ function system_update () {
   cmd1="pacman -Sc --noconfirm > /dev/null;"
   cmd2="pacman -Syu --noconfirm"
   [ -t 1 ] && message "${1}: Purging non-installed packages, refreshing repos, and updating system."
-  eval arch-nspawn ${CHROOT}/${1}/root "${cmd1}"
-  eval arch-nspawn ${CHROOT}/${1}/root "${cmd2}"
+  eval arch-nspawn "${CHROOT}/${1}/root" "${cmd1}"
+  eval arch-nspawn "${CHROOT}/${1}/root" "${cmd2}"
 }
 
 function pkg_ver_comp () {
@@ -158,22 +158,22 @@ function pkg_ver_comp () {
 }
 
 function pkg_ver_loc () {
-  lpkgnam=`ls ${REPDIR}/${REPNAM}/${2}/${1}-[0-9lrv]*.pkg.tar.xz 2> /dev/null | head -1 | rev | cut -d/ -f1 | rev`
-  lpkgver=`echo ${lpkgnam:\`expr ${#1} + 1\`:\`expr ${#lpkgnam} - ${#1} - 12\`} | rev | cut -d- -f2- | rev`
+  lpkgnam=$(ls "${REPDIR}/${REPNAM}/${2}/${1}-[0-9lrv]*.pkg.tar.xz" 2> /dev/null | head -1 | rev | cut -d/ -f1 | rev)
+  lpkgver=$(echo "${lpkgnam:\`expr ${#1} + 1\`:\`expr ${#lpkgnam} - ${#1} - 12\`}" | rev | cut -d- -f2- | rev)
   [[ "${lpkgnam}" == "" ]] && lpkgver='missing'
   echo ${lpkgver}
 }
 
 function pkg_ver_aur () {
-   result=$(curl -G -s https://aur.archlinux.org/rpc.php --data type=info --data-urlencode arg=${1} | \
+   result=$(curl -G -s https://aur.archlinux.org/rpc.php --data type=info --data-urlencode arg="${1}" | \
             sed 's/[,{]/\n/g' | grep "\"Version\"" | cut -d\" -f4)
-   [[ -n ${result} ]] && echo ${result} || echo "missing"
+   [[ -n "${result}" ]] && echo "${result}" || echo "missing"
 }
 
 function pkg_get () {
-  curl -s -o ${1}.tar.gz https://aur.archlinux.org/cgit/aur.git/snapshot/${1}.tar.gz
-  tar -zxvf ${1}.tar.gz > /dev/null
-  rm ${1}.tar.gz
+  curl -s -o "${1}.tar.gz" "https://aur.archlinux.org/cgit/aur.git/snapshot/${1}.tar.gz"
+  tar -zxvf "${1}.tar.gz" > /dev/null
+  rm "${1}.tar.gz"
 }
 
 function pkg_remove() {
@@ -185,33 +185,33 @@ function pkg_add () {
   # A bit hackish since some git builds will change pkg version after 
   # The only guarantee left is that there will a single package inside ${1}
   message "Moving ${1} package to repo..."
-  mv -v ${REPDIR}/${REPNAM}/build/aur/${1}/*.pkg.tar.xz ${REPDIR}/${REPNAM}/${2}
+  mv -v "${REPDIR}/${REPNAM}/build/aur/${1}/*.pkg.tar.xz" "${REPDIR}/${REPNAM}/${2}"
 }
 
 function repo_build() {
-  rm ${REPDIR}/${REPNAM}/${1}/${REPNAM}.{db,files}*
-  if [ ${EUID} == `id -u ${USRNAM}` ]; then
+  rm "${REPDIR}/${REPNAM}/${1}/${REPNAM}.{db,files}*"
+  if [ "${EUID}" == "$(id -u "${USRNAM}")" ]; then
     message "Updating the repo database for ${REPNAM}/${1}..."
-    repo-add -q ${REPDIR}/${REPNAM}/${1}/${REPNAM}.db.tar.xz ${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz
+    repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.db.tar.xz" "${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz"
     message "Updating the repo filelist for ${REPNAM}/${1}..."
-    repo-add -q ${REPDIR}/${REPNAM}/${1}/${REPNAM}.files.tar.xz ${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz
+    repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.files.tar.xz" "${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz"
   else
     message "Updating the repo database for ${REPNAM}/${1}..."
-    su -c "repo-add -q ${REPDIR}/${REPNAM}/${1}/${REPNAM}.db.tar.xz ${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz" - ${USRNAM}
+    su -c repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.db.tar.xz" "${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz" - "${USRNAM}"
     message "Updating the repo filelist for ${REPNAM}/${1}..."
-    su -c "repo-add -q ${REPDIR}/${REPNAM}/${1}/${REPNAM}.files.tar.xz ${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz" - ${USRNAM}
+    su -c repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.files.tar.xz" "${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz" - "${USRNAM}"
   fi
 }
 
 function sign_pkgs() {
   message "Signing packages with missing signatures for ${1} as ${USRNAM}..."
-  for file in ${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz; do
-    if [ ! -e ${file}.sig ]; then
+  for file in "${REPDIR}/${REPNAM}/${1}/"*.pkg.tar.xz; do
+    if [ ! -e "${file}.sig" ]; then
       [ -t 1 ] && echo "Signing ${file}..."
-      if [ ${EUID} != `id -u ${USRNAM}` ]; then
-        su -c "gpg --detach-sign ${file}" - ${USRNAM}
+      if [ "${EUID}" != "$(id -u "${USRNAM}")" ]; then
+        su -c "gpg --detach-sign ${file}" - "${USRNAM}"
       else
-        gpg --detach-sign ${file}
+        gpg --detach-sign "${file}"
       fi
     fi
   done
@@ -220,14 +220,14 @@ function sign_pkgs() {
 function pkg_build () {
 
   message "Preparing to build ${1} for ${4}..."
-  sudo rm -rf ${REPDIR}/${REPNAM}/build/aur/${1}
+  sudo rm -rf "${REPDIR}/${REPNAM}/build/aur/${1}"
 
   mpec=1
-  pkg_get ${1}
+  pkg_get "${1}"
 
-  trch="`cat ${REPDIR}/${REPNAM}/build/aur/${1}/PKGBUILD | grep arch= | cut -d= -f2`"
-  tnat="`echo ${trch} | grep ${4}`"
-  tany="`echo ${trch} | grep any`"
+  trch=$(cat "${REPDIR}/${REPNAM}/build/aur/${1}/PKGBUILD" | grep arch= | cut -d= -f2)
+  tnat=$(echo "${trch}" | grep "${4}")
+  tany=$(echo "${trch}" | grep any)
 
     if [ -n "${tnat}" -o -n "${tany}" ]; then
       chown -R ${USRNAM}:$(id -ng ${USRNAM}) ${REPDIR}/${REPNAM}/build/aur/${1}
