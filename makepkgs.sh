@@ -45,7 +45,6 @@ BEGIN='\e[1;32m'
 RESET='\e[0m'
 TAB1='tput cub 80; tput cuf 30'
 TAB2='tput cub 80; tput cuf 55'
-TAB3='tput cub 80; tput cuf 80'
 
 ### GLOBAL VARIABLES ###
 
