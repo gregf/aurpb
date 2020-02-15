@@ -320,7 +320,7 @@ if [ -f "${REPDIR}/${REPNAM}/build/aur/packages.list" ]; then
               $FLAG_INFO && [ -t 1 ] && echo "List mode on...not building missing ${arch} package."
             fi
           else
-            if pkg_ver_comp ${lvl} ${av}; then
+            if ! pkg_ver_comp ${lvl} ${av}; then
               if [ ${FLAG_LIST} == false ]; then
                 pkg_build ${pkg} ${lvl} ${av} ${arch} && [[ $? == 0 ]] && depupd=1
               else
