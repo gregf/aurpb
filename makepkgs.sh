@@ -237,7 +237,7 @@ function pkg_build () {
       makechrootpkg -cur ${CHROOT}/${4} -l aurpbs
       if [ $? == 0 ]; then
         message 'Package creation succeeded!'
-        if [ -f `ls ${REPDIR}/${REPNAM}/build/aur/${1}/${1}-*.pkg.tar 2> /dev/null` ]; then
+        if [ -f "`ls ${REPDIR}/${REPNAM}/build/aur/${1}/${1}-*.pkg.tar 2> /dev/null`" ]; then
           message 'Package left as tarball.  Manually compressing...'
           xz "${REPDIR}/${REPNAM}/build/aur/${1}/${1}"-*.pkg.tar
         fi
