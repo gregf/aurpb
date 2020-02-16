@@ -2,6 +2,8 @@
 
 #set -x
 
+BASEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 [[ -z ${PATH} ]] && PATH=/usr/bin
 
 function die() {
@@ -119,10 +121,12 @@ done
 
 ### MAKE SURE THE BUILD CHROOTS EXISTS ###
 
-if [ ! -d "${CHROOT}/x86_64/root" ]; then
-  echo "${CHROOT}/x86_64/root does not exist.  Setting up the initial base chroot" >&2
-  sudo mkdir -p "${CHROOT}/x86_64"
-  sudo mkarchroot "${CHROOT}/x86_64/root" base-devel || die
+if [[ ! -d "${CHROOT}/x86_64/stable/root" || ! -d "${CHROOT}/x86_64/testing/root" ]]; then
+  for repo in stable testing; do
+    echo "${CHROOT}/x86_64/${repo} does not exist.  Setting up the initial base chroot" >&2
+    sudo mkdir -p "${CHROOT}/x86_64/${repo}"
+    sudo mkarchroot -C "${BASEDIR}/configs/${repo}/pacman.conf" -M "${BASEDIR}/configs/${repo}/makepkg.conf" "${CHROOT}/x86_64/${repo}/root" base-devel || die
+  done
 fi
 
 ### CHECK TO SEE IF WE HAVE A WORKING INTERNET CONNECTION ###
@@ -150,12 +154,14 @@ function system_update () {
   cmd1="pacman -Sc --noconfirm > /dev/null;"
   cmd2="pacman -Syu --noconfirm"
   [ -t 1 ] && message "${1}: Purging non-installed packages, refreshing repos, and updating system."
-  eval arch-nspawn "${CHROOT}/${1}/root" "${cmd1}"
-  eval arch-nspawn "${CHROOT}/${1}/root" "${cmd2}"
+  for repo in stable testing; do
+      eval arch-nspawn "${CHROOT}/${1}/${repo}/root" "${cmd1}"
+      eval arch-nspawn "${CHROOT}/${1}/${repo}/root" "${cmd2}"
+  done
 }
 
 function pkg_ver_comp () {
-  vercmp "${1}" "${2}"
+  vercmp "${1}" "${2}" 1> /dev/null
 }
 
 function pkg_ver_loc () {
@@ -234,7 +240,9 @@ function pkg_build () {
       chown -R ${USRNAM}:$(id -ng ${USRNAM}) ${REPDIR}/${REPNAM}/build/aur/${1}
       cd ${REPDIR}/${REPNAM}/build/aur/${1}
       [[ -f ../${1}.sh ]] && message 'Executing PKGBUILD customization...' && sh ../${1}.sh
-      makechrootpkg -cur ${CHROOT}/${4} -l aurpbs
+      for repo in stable testing; do
+          makechrootpkg -cur ${CHROOT}/${4}/${repo}/ -l "hugops-${repo}"
+      done
       if [ $? == 0 ]; then
         message 'Package creation succeeded!'
         if [ -f "`ls ${REPDIR}/${REPNAM}/build/aur/${1}/${1}-*.pkg.tar 2> /dev/null`" ]; then
@@ -290,7 +298,6 @@ if [ -f "${REPDIR}/${REPNAM}/build/aur/packages.list" ]; then
   while read line; do
     depupd=0
     arch=x86_64
-
     for pkg in ${line}; do
       [[ "${pkg:0:1}" == "#" ]] && break
       cd ${REPDIR}/${REPNAM}/build/aur
