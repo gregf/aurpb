@@ -159,7 +159,7 @@ function pkg_ver_comp () {
 }
 
 function pkg_ver_loc () {
-  lpkgnam=$(ls "${REPDIR}/${REPNAM}/${2}/${1}-[0-9lrv]*.pkg.tar.xz" 2> /dev/null | head -1 | rev | cut -d/ -f1 | rev)
+  lpkgnam=$(ls "${REPDIR}/${REPNAM}/${2}/${1}"-[0-9lrv]*.pkg.tar.xz 2> /dev/null | head -1 | rev | cut -d/ -f1 | rev)
   lpkgver=`echo ${lpkgnam:\`expr ${#1} + 1\`:\`expr ${#lpkgnam} - ${#1} - 12\`} | rev | cut -d- -f2- | rev`
   [[ "${lpkgnam}" == "" ]] && lpkgver='missing'
   echo ${lpkgver}
@@ -179,28 +179,28 @@ function pkg_get () {
 
 function pkg_remove() {
   [ -t 1 ] && message "Removing ${1}-${2} from ${3}..."
-  eval rm -rv "${REPDIR}/${REPNAM}/${3}/${1}-${2}-*.pkg.tar.xz*"
+  eval rm -rv "${REPDIR}/${REPNAM}/${3}/${1}-${2}"-*.pkg.tar.xz*
 }
 
 function pkg_add () {
   # A bit hackish since some git builds will change pkg version after 
   # The only guarantee left is that there will a single package inside ${1}
   message "Moving ${1} package to repo..."
-  mv -v "${REPDIR}/${REPNAM}/build/aur/${1}/*.pkg.tar.xz" "${REPDIR}/${REPNAM}/${2}"
+  mv -v "${REPDIR}/${REPNAM}/build/aur/${1}/"*.pkg.tar.xz "${REPDIR}/${REPNAM}/${2}"
 }
 
 function repo_build() {
-  rm "${REPDIR}/${REPNAM}/${1}/${REPNAM}.{db,files}*"
+  rm "${REPDIR}/${REPNAM}/${1}/${REPNAM}".{db,files}*
   if [ "${EUID}" == "$(id -u "${USRNAM}")" ]; then
     message "Updating the repo database for ${REPNAM}/${1}..."
-    repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.db.tar.xz" "${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz"
+    repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.db.tar.xz" "${REPDIR}/${REPNAM}/${1}/"*.pkg.tar.xz
     message "Updating the repo filelist for ${REPNAM}/${1}..."
-    repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.files.tar.xz" "${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz"
+    repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.files.tar.xz" "${REPDIR}/${REPNAM}/${1}/"*.pkg.tar.xz
   else
     message "Updating the repo database for ${REPNAM}/${1}..."
-    su -c repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.db.tar.xz" "${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz" - "${USRNAM}"
+    su -c repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.db.tar.xz" "${REPDIR}/${REPNAM}/${1}/"*.pkg.tar.xz - "${USRNAM}"
     message "Updating the repo filelist for ${REPNAM}/${1}..."
-    su -c repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.files.tar.xz" "${REPDIR}/${REPNAM}/${1}/*.pkg.tar.xz" - "${USRNAM}"
+    su -c repo-add -q "${REPDIR}/${REPNAM}/${1}/${REPNAM}.files.tar.xz" "${REPDIR}/${REPNAM}/${1}/"*.pkg.tar.xz - "${USRNAM}"
   fi
 }
 
@@ -237,7 +237,7 @@ function pkg_build () {
       makechrootpkg -cur ${CHROOT}/${4} -l aurpbs
       if [ $? == 0 ]; then
         message 'Package creation succeeded!'
-        if [ -f "`ls ${REPDIR}/${REPNAM}/build/aur/${1}/${1}-*.pkg.tar 2> /dev/null`" ]; then
+        if [ -f `ls "${REPDIR}/${REPNAM}/build/aur/${1}/${1}"-*.pkg.tar 2> /dev/null` ]; then
           message 'Package left as tarball.  Manually compressing...'
           xz ${REPDIR}/${REPNAM}/build/aur/${1}/${1}-*.pkg.tar
         fi
