@@ -210,9 +210,9 @@ function sign_pkgs() {
     if [ ! -e "${file}.sig" ]; then
       [ -t 1 ] && echo "Signing ${file}..."
       if [ "${EUID}" != "$(id -u "${USRNAM}")" ]; then
-        su -c "gpg --detach-sign ${file}" - "${USRNAM}"
+        su -c "gpg --use-agent --detach-sign ${file}" - "${USRNAM}"
       else
-        gpg --detach-sign "${file}"
+        gpg --use-agent --detach-sign "${file}"
       fi
     fi
   done
