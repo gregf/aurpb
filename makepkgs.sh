@@ -24,6 +24,7 @@ argument processing stops.
   -l  Only list package info.
   -d  Only reconstruct repo database.
   -s  Only sign packages.
+  -e  Edit package list
 
 COMBINABLE FLAGS:
 
@@ -70,13 +71,14 @@ FLAG_INFO=false # Print a little more info?
 
 OPTIND=1
 
-while getopts "hildspc:r:n:u:" opt; do
+while getopts "ehildspc:r:n:u:" opt; do
   case "${opt}" in
     '?')  show_help >&2 && die;;
     h) show_help && exit 0;;
     l) FLAG_LIST=true ; FLAG_MAKE=false ; break ;;
     d) FLAG_REPO=true ; FLAG_MAKE=false ; break ;;
     s) FLAG_SIGN=true ; FLAG_MAKE=false ; break ;;
+    e) FLAG_EDIT=true   ;;
     i) FLAG_INFO=true   ;;
     c) CHROOT=${OPTARG} ;;
     r) REPDIR=${OPTARG} ;;
@@ -108,10 +110,20 @@ fi
 [ -z "${CHROOT}" ] && CHROOT="/srv/build" && $FLAG_INFO && [ -t 1 ] && echo "No chroot directory specified, defaulting to /srv/build"
 [ -z "${REPDIR}" ] && REPDIR="/srv/repo" && $FLAG_INFO && [ -t 1 ] && echo "No repo directory specified, defaulting to /srv/repo"
 [ -z "${USRNAM}" ] && USRNAM="${USER}" && $FLAG_INFO && [ -t 1 ] && echo "No username specified.  Will sign packages as ${USER}"
+[ -z "${PKGLIST}"] && PKGLIST="${REPDIR}/packages.list"
+
+if [ "${FLAG_EDIT}" ]; then
+	if [ -z $EDITOR ]; then
+	    echo "Make sure to export an EDITOR variable first" && die
+	fi
+
+    $EDITOR $PKGLIST
+	exit 0
+fi
 
 ### MAKE SURE WE HAVE THE REQUISITE BINARIES ###
 
-for binary in sed tar xz host curl arch-nspawn makechrootpkg; do
+for binary in sed tar xz ccache host curl arch-nspawn makechrootpkg; do
   type ${binary} > /dev/null 2>&1 || $(pacman -S --noconfirm "${binary}")
 done
 
@@ -125,7 +137,7 @@ if [[ ! -d "${CHROOT}/x86_64/stable/root" || ! -d "${CHROOT}/x86_64/testing/root
   for repo in stable testing; do
     echo "${CHROOT}/x86_64/${repo} does not exist.  Setting up the initial base chroot" >&2
     sudo mkdir -p "${CHROOT}/x86_64/${repo}"
-    sudo mkarchroot -C "${BASEDIR}/configs/${repo}/pacman.conf" -M "${BASEDIR}/configs/${repo}/makepkg.conf" "${CHROOT}/x86_64/${repo}/root" base-devel || die
+    sudo mkarchroot -C "${BASEDIR}/configs/${repo}/pacman.conf" -M "${BASEDIR}/configs/${repo}/makepkg.conf" "${CHROOT}/x86_64/${repo}/root" ccache base-devel || die
   done
 fi
 
@@ -145,6 +157,14 @@ fi
   [[ "${aurtst}" != "${tstver}" ]] && echo "Unexpected query result from the AUR for the ${tstpkg} package." && die
 
 ### FUNCTIONS ###
+
+function edit_package_list() {
+    if [ -n $EDITOR ]; then
+        echo "Make sure to export an EDITOR variable first" && die
+    fi
+
+    $EDITOR $PKGLIST
+}
 
 function message() {
   [ -t 1 ] && echo -e "${COLOR}${1}${RESET}"
@@ -281,7 +301,7 @@ ${FLAG_LIST} || { system_update x86_64; }
 
 ### MAKE SURE WE HAVE A PAKCAKGE LIST ###
 
-if [ -f "${REPDIR}/${REPNAM}/build/aur/packages.list" ]; then
+if [ -f "${PKGLIST}" ]; then
 
   ### CREATE DIRECTORIES IF THEY DON'T EXIST ###
 
@@ -338,9 +358,9 @@ if [ -f "${REPDIR}/${REPNAM}/build/aur/packages.list" ]; then
           fi
       fi
     done
-  done < "${REPDIR}/${REPNAM}/build/aur/packages.list"
+  done < "${PKGLIST}"
 else
-  echo "${REPDIR}/${REPNAM}/build/aur/packages.list does not exist." >&2
+  echo "${PKGLIST} does not exist." >&2
   die
 fi
 
