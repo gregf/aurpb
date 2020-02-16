@@ -205,8 +205,8 @@ function repo_build() {
 }
 
 function sign_pkgs() {
-  message "Signing packages with missing signatures for ${1} as ${USRNAM}..."
-  for file in "${REPDIR}/${REPNAM}/${1}/"*.pkg.tar.xz; do
+  message "Signing packages & db with missing signatures for ${1} as ${USRNAM}..."
+  for file in "${REPDIR}/${REPNAM}/${1}/"*.xz; do
     if [ ! -e "${file}.sig" ]; then
       [ -t 1 ] && echo "Signing ${file}..."
       if [ "${EUID}" != "$(id -u "${USRNAM}")" ]; then
