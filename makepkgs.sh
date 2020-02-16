@@ -66,6 +66,7 @@ FLAG_LIST=false # Only list package info?
 FLAG_REPO=false # Only update the repos?
 FLAG_SIGN=false # Only sign packages?
 FLAG_INFO=false # Print a little more info?
+FLAG_EDIT=false # Edit packages.list?
 
 ### SET VARIABLES BASED ON PARAMETERS ###
 
